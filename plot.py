@@ -50,7 +50,7 @@ axis.set_zlabel("Value")
 plt.show()
 
 
-light_orange = (12, 0, 0)
+light_orange = (12, 100, 0)
 dark_orange = (25, 255, 255)
 
 mask = cv2.inRange(hsv_img, light_orange, dark_orange)
