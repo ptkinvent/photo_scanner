@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 import cv2
 import numpy as np
 
@@ -46,7 +47,7 @@ def order_points(pts):
 
 
 # Read the original image
-img_orig = cv2.imread('data/DSC_5122.JPG')
+img_orig = cv2.imread(sys.argv[1])
 
 # Resize smaller
 scale_percent = 10
