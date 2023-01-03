@@ -7,6 +7,44 @@ import numpy as np
 Resource: https://learnopencv.com/automatic-document-scanner-using-opencv/
 """
 
+
+def find_dest(pts):
+    (tl, tr, br, bl) = pts
+    # Finding the maximum width.
+    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
+    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
+    maxWidth = max(int(widthA), int(widthB))
+
+    # Finding the maximum height.
+    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+    maxHeight = max(int(heightA), int(heightB))
+    # Final destination co-ordinates.
+    destination_corners = [[0, 0], [maxWidth, 0], [maxWidth, maxHeight], [0, maxHeight]]
+
+    return order_points(destination_corners)
+
+
+def order_points(pts):
+    '''Rearrange coordinates to order:
+      top-left, top-right, bottom-right, bottom-left'''
+    rect = np.zeros((4, 2), dtype='float32')
+    pts = np.array(pts)
+    s = pts.sum(axis=1)
+    # Top-left point will have the smallest sum.
+    rect[0] = pts[np.argmin(s)]
+    # Bottom-right point will have the largest sum.
+    rect[2] = pts[np.argmax(s)]
+
+    diff = np.diff(pts, axis=1)
+    # Top-right point will have the smallest difference.
+    rect[1] = pts[np.argmin(diff)]
+    # Bottom-left will have the largest difference.
+    rect[3] = pts[np.argmax(diff)]
+    # Return the ordered coordinates.
+    return rect.astype('int').tolist()
+
+
 # Read the original image
 img_orig = cv2.imread('data/DSC_5122.JPG')
 
@@ -15,14 +53,14 @@ scale_percent = 10
 width = int(img_orig.shape[1] * scale_percent/100)
 height = int(img_orig.shape[0] * scale_percent/100)
 dim = (width, height)
-img = cv2.resize(img_orig, dim, interpolation=cv2.INTER_AREA)
+img_orig = cv2.resize(img_orig, dim, interpolation=cv2.INTER_AREA)
 
 # Display resized image
-cv2.imshow('Original', img)
+cv2.imshow('Original', img_orig)
 cv2.waitKey(0)
 
 # Blur the image for better edge detection
-img = cv2.GaussianBlur(img, (3,3), 0)
+img = cv2.GaussianBlur(img_orig, (3,3), 0)
 
 # Select only the orange pixels from the image
 light_orange = (12, 100, 0)
@@ -80,7 +118,6 @@ contours, hierarchy = cv2.findContours(canny, cv2.RETR_LIST, cv2.CHAIN_APPROX_NO
 page = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
 con = cv2.drawContours(con, page, -1, (0, 255, 255), 3)
 
-con = np.zeros_like(img)
 for c in page:
     epsilon = 0.02*cv2.arcLength(c, True)
     corners = cv2.approxPolyDP(c, epsilon, True)
@@ -89,12 +126,29 @@ for c in page:
 cv2.drawContours(con, c, -1, (0, 255, 255), 3)
 cv2.drawContours(con, corners, -1, (0, 255, 0), 10)
 corners = sorted(np.concatenate(corners).tolist())
+corners = order_points(corners)
+
+destination_corners = find_dest(corners)
 
 for index, c in enumerate(corners):
     character = chr(65+index)
     cv2.putText(con, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1, cv2.LINE_AA)
-
 cv2.imshow('Contours', con)
+cv2.waitKey(0)
+
+h, w = img_orig.shape[:2]
+# Getting the homography.
+M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
+# Perspective transform using homography.
+final = cv2.warpPerspective(img_orig, M, (destination_corners[2][0], destination_corners[2][1]),
+                            flags=cv2.INTER_LINEAR)
+
+h, w = img_orig.shape[:2]
+# Getting the homography.
+M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
+# Perspective transform using homography.
+final = cv2.warpPerspective(img_orig, M, (destination_corners[2][0], destination_corners[2][1]), flags=cv2.INTER_LINEAR)
+cv2.imshow('Final', final)
 cv2.waitKey(0)
 
 cv2.destroyAllWindows()
