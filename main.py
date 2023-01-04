@@ -48,6 +48,7 @@ def order_points(pts):
 
 # Read the original image
 img_orig = cv2.imread(sys.argv[1])
+verbose = 1 if len(sys.argv) > 2 and sys.argv[2] == '--verbose' else 0
 
 # Resize smaller
 scale_percent = 10
@@ -70,15 +71,17 @@ img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
 mask = cv2.inRange(img_hsv, light_orange, dark_orange)
 img = cv2.bitwise_and(img, img, mask=mask)
-cv2.imshow('Filtered', img)
-cv2.waitKey(0)
+if verbose:
+    cv2.imshow('Filtered', img)
+    cv2.waitKey(0)
 
 # Open and close the image repeatedly to blank the photograph
 kernel = np.ones((5,5), np.uint8)
 img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=6)
 img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, iterations=20)
-cv2.imshow('Closed', img)
-cv2.waitKey(0)
+if verbose:
+    cv2.imshow('Closed', img)
+    cv2.waitKey(0)
 
 # Convert all black pixels to white and other pixels to black
 black_pixels = np.where(
@@ -102,16 +105,18 @@ rect = (20, 20, img.shape[1]-20, img.shape[0]-20)
 cv2.grabCut(img, mask, rect, bgModel, fgModel, 5, cv2.GC_INIT_WITH_RECT)
 mask2 = np.where((mask==2)|(mask==0), 0, 1).astype('uint8')
 img = img*mask2[:,:,np.newaxis]
-cv2.imshow('GrabCut', img)
-cv2.waitKey(0)
+if verbose:
+    cv2.imshow('GrabCut', img)
+    cv2.waitKey(0)
 
 # Canny Edge Detection
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 gray = cv2.GaussianBlur(gray, (11, 11), 0)
 canny = cv2.Canny(image=gray, threshold1=0, threshold2=200) # Canny Edge Detection
 canny = cv2.dilate(canny, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
-cv2.imshow('Edges', canny)
-cv2.waitKey(0)
+if verbose:
+    cv2.imshow('Edges', canny)
+    cv2.waitKey(0)
 
 # Contour detection
 con = np.zeros_like(img)
@@ -134,8 +139,9 @@ destination_corners = find_dest(corners)
 for index, c in enumerate(corners):
     character = chr(65+index)
     cv2.putText(con, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1, cv2.LINE_AA)
-cv2.imshow('Contours', con)
-cv2.waitKey(0)
+if verbose:
+    cv2.imshow('Contours', con)
+    cv2.waitKey(0)
 
 h, w = img_orig.shape[:2]
 # Getting the homography.
