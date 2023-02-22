@@ -13,8 +13,7 @@ from matplotlib import cm
 from matplotlib import colors
 
 if len(sys.argv) != 2:
-    print('Usage: python3 main.py <fname>')
-    exit(0)
+    sys.exit('Usage: python3 plot.py <fname>')
 fname = sys.argv[1]
 img = cv2.imread(fname)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
