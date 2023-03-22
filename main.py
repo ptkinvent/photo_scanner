@@ -3,6 +3,7 @@
 import sys
 import cv2
 import numpy as np
+from corner_detector import CornerDetector
 
 """
 Resource: https://stackoverflow.com/questions/42369536/drag-mouse-to-draw-a-line-and-get-cordinates-of-end-points-of-line-in-opencv-pyt
@@ -93,6 +94,11 @@ def main():
             cv2.imwrite('final.jpg', final)
             cv2.destroyAllWindows()
             break
+
+        # 'A' key to auto-detect corners
+        elif k == ord('a'):
+            corner_detector = CornerDetector()
+            handles = corner_detector.detect(img)
 
         # Esc key to exit
         elif k == 27:
