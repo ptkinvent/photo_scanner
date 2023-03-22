@@ -74,10 +74,11 @@ def main():
     cv2.setMouseCallback('image', mouse_handler)
 
     while True:
-        img = cv2.resize(img_orig, dim, interpolation=cv2.INTER_AREA)
-        for handle in handles:
-            cv2.circle(img, handle, radius=10, color=color_magenta, thickness=5)
-        cv2.imshow('image', img)
+        img_annotated = cv2.resize(img_orig, dim, interpolation=cv2.INTER_AREA)
+        for i in range(4):
+            cv2.circle(img_annotated, handles[i], radius=10, color=color_magenta, thickness=5)
+            cv2.line(img_annotated, handles[i-1], handles[i], color_magenta, thickness=1)
+        cv2.imshow('image', img_annotated)
         k = cv2.waitKey(1)
 
         # Spacebar to output image
