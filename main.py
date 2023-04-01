@@ -80,6 +80,11 @@ def main():
         elif k == ord('a'):
             handles = CornerDetector.detect_corners(img)
 
+        # 'P' key to preview image
+        elif k == ord('p'):
+            preview = PerspectiveCorrector.correct_perspective(img, handles)
+            cv2.imshow('preview', preview)
+
         # Esc key to exit
         elif k == 27:
             cv2.destroyAllWindows()
