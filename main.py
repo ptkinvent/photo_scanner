@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import os
 import cv2
 import numpy as np
 from corner_detector import CornerDetector
@@ -22,6 +23,7 @@ def main():
         sys.exit('Usage: python3 mouse_handler.py <fname>')
 
     img_orig = cv2.imread(sys.argv[1])
+    fname = os.path.split(sys.argv[1])[-1]
 
     # Resize smaller
     scale = 1/5
@@ -71,8 +73,8 @@ def main():
         if k == 32:
             corners = [(x/scale, y/scale) for (x, y) in handles]
             final = PerspectiveCorrector.correct_perspective(img_orig, corners)
-            print('Outputting...')
-            cv2.imwrite('final.jpg', final)
+            print(f'Outputting to {fname}...')
+            cv2.imwrite(fname, final)
             cv2.destroyAllWindows()
             break
 
