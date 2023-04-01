@@ -1,39 +1,40 @@
 #!/usr/bin/python3
 
-import sys
 import cv2
 import numpy as np
 
-"""
-Resource: https://learnopencv.com/automatic-document-scanner-using-opencv/
-"""
-
-
-def order_points(pts):
-    '''Rearrange coordinates to order:
-      top-left, top-right, bottom-right, bottom-left'''
-    rect = np.zeros((4, 2), dtype='float32')
-    pts = np.array(pts)
-    s = pts.sum(axis=1)
-    # Top-left point will have the smallest sum.
-    rect[0] = pts[np.argmin(s)]
-    # Bottom-right point will have the largest sum.
-    rect[2] = pts[np.argmax(s)]
-
-    diff = np.diff(pts, axis=1)
-    # Top-right point will have the smallest difference.
-    rect[1] = pts[np.argmin(diff)]
-    # Bottom-left will have the largest difference.
-    rect[3] = pts[np.argmax(diff)]
-    # Return the ordered coordinates.
-    return rect.astype('int').tolist()
-
 
 class CornerDetector:
+    """
+    Automatically detects 4 corners within an image
+    Resource: https://learnopencv.com/automatic-document-scanner-using-opencv/
+    """
+
     def __init__(self):
         pass
 
-    def detect(self, img, verbose=False):
+    @staticmethod
+    def _order_points(pts):
+        '''Rearrange coordinates to order:
+        top-left, top-right, bottom-right, bottom-left'''
+        rect = np.zeros((4, 2), dtype='float32')
+        pts = np.array(pts)
+        s = pts.sum(axis=1)
+        # Top-left point will have the smallest sum.
+        rect[0] = pts[np.argmin(s)]
+        # Bottom-right point will have the largest sum.
+        rect[2] = pts[np.argmax(s)]
+
+        diff = np.diff(pts, axis=1)
+        # Top-right point will have the smallest difference.
+        rect[1] = pts[np.argmin(diff)]
+        # Bottom-left will have the largest difference.
+        rect[3] = pts[np.argmax(diff)]
+        # Return the ordered coordinates.
+        return rect.astype('int').tolist()
+
+    @staticmethod
+    def detect_corners(img, debug=False):
         # Blur the image for better edge detection
         img = cv2.GaussianBlur(img, (3,3), 0)
 
@@ -44,7 +45,7 @@ class CornerDetector:
         img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
         mask = cv2.inRange(img_hsv, light_orange, dark_orange)
         img = cv2.bitwise_and(img, img, mask=mask)
-        if verbose:
+        if debug:
             cv2.imshow('Filtered', img)
             cv2.waitKey(0)
 
@@ -52,7 +53,7 @@ class CornerDetector:
         kernel = np.ones((5,5), np.uint8)
         img = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel, iterations=6)
         img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, iterations=20)
-        if verbose:
+        if debug:
             cv2.imshow('Closed', img)
             cv2.waitKey(0)
 
@@ -78,7 +79,7 @@ class CornerDetector:
         cv2.grabCut(img, mask, rect, bgModel, fgModel, 5, cv2.GC_INIT_WITH_RECT)
         mask2 = np.where((mask==2)|(mask==0), 0, 1).astype('uint8')
         img = img*mask2[:,:,np.newaxis]
-        if verbose:
+        if debug:
             cv2.imshow('GrabCut', img)
             cv2.waitKey(0)
 
@@ -87,7 +88,7 @@ class CornerDetector:
         gray = cv2.GaussianBlur(gray, (11, 11), 0)
         canny = cv2.Canny(image=gray, threshold1=0, threshold2=200) # Canny Edge Detection
         canny = cv2.dilate(canny, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
-        if verbose:
+        if debug:
             cv2.imshow('Edges', canny)
             cv2.waitKey(0)
 
@@ -105,12 +106,12 @@ class CornerDetector:
         cv2.drawContours(con, c, -1, (0, 255, 255), 3)
         cv2.drawContours(con, corners, -1, (0, 255, 0), 10)
         corners = sorted(np.concatenate(corners).tolist())
-        corners = order_points(corners)
+        corners = CornerDetector._order_points(corners)
 
         for index, c in enumerate(corners):
             character = chr(65+index)
             cv2.putText(con, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1, cv2.LINE_AA)
-        if verbose:
+        if debug:
             cv2.imshow('Contours', con)
             cv2.waitKey(0)
 

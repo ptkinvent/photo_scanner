@@ -4,6 +4,7 @@ import sys
 import cv2
 import numpy as np
 from corner_detector import CornerDetector
+from perspective_corrector import PerspectiveCorrector
 
 """
 Resource: https://stackoverflow.com/questions/42369536/drag-mouse-to-draw-a-line-and-get-cordinates-of-end-points-of-line-in-opencv-pyt
@@ -14,21 +15,6 @@ drag = False
 
 def dist(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-
-def find_dest_coords(pts):
-    (tl, tr, br, bl) = pts
-
-    widthA = dist(br, bl)
-    widthB = dist(tr, tl)
-    maxWidth = max(int(widthA), int(widthB))
-
-    heightA = dist(tr, br)
-    heightB = dist(tl, bl)
-    maxHeight = max(int(heightA), int(heightB))
-
-    # Final destination coord
-    return [[0, 0], [maxWidth, 0], [maxWidth, maxHeight], [0, maxHeight]]
 
 
 def main():
@@ -83,14 +69,8 @@ def main():
 
         # Spacebar to output image
         if k == 32:
-            # Getting the homography
             corners = [(x/scale, y/scale) for (x, y) in handles]
-            destination_corners = find_dest_coords(corners)
-            M = cv2.getPerspectiveTransform(np.float32(corners), np.float32(destination_corners))
-            # Perspective transform using homography
-            final = cv2.warpPerspective(img_orig, M, (destination_corners[2][0], destination_corners[2][1]), flags=cv2.INTER_LINEAR)
-
-            # Output
+            final = PerspectiveCorrector.correct_perspective(img_orig, corners)
             print('Outputting...')
             cv2.imwrite('final.jpg', final)
             cv2.destroyAllWindows()
@@ -98,8 +78,7 @@ def main():
 
         # 'A' key to auto-detect corners
         elif k == ord('a'):
-            corner_detector = CornerDetector()
-            handles = corner_detector.detect(img)
+            handles = CornerDetector.detect_corners(img)
 
         # Esc key to exit
         elif k == 27:
