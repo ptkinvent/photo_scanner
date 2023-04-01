@@ -24,7 +24,7 @@ def main():
     img_orig = cv2.imread(sys.argv[1])
 
     # Resize smaller
-    scale = 1/10
+    scale = 1/5
     width = int(img_orig.shape[1] * scale)
     height = int(img_orig.shape[0] * scale)
     dim = (width, height)
@@ -36,7 +36,7 @@ def main():
     br_handle = (width-50, height-50)
     bl_handle = (50, height-50)
     handles = [tl_handle, tr_handle, br_handle, bl_handle]
-    color_magenta = (255, 0, 255)
+    color_cyan = (255, 255, 0)
 
     cv2.imshow('image', img)
 
@@ -62,8 +62,8 @@ def main():
     while True:
         img_annotated = cv2.resize(img_orig, dim, interpolation=cv2.INTER_AREA)
         for i in range(4):
-            cv2.circle(img_annotated, handles[i], radius=10, color=color_magenta, thickness=5)
-            cv2.line(img_annotated, handles[i-1], handles[i], color_magenta, thickness=1)
+            cv2.circle(img_annotated, handles[i], radius=10, color=color_cyan, thickness=5)
+            cv2.line(img_annotated, handles[i-1], handles[i], color_cyan, thickness=1)
         cv2.imshow('image', img_annotated)
         k = cv2.waitKey(1)
 
